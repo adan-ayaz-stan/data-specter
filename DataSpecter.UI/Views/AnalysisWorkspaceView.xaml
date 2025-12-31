@@ -1,0 +1,335 @@
+<UserControl x:Class="DataSpecter.UI.Views.AnalysisWorkspaceView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:converters="clr-namespace:DataSpecter.UI.Converters" mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.Background>
+            <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="1.2" RadiusY="1.2">
+                <GradientStop Color="#1a0505" Offset="0.0"/>
+                <GradientStop Color="#000000" Offset="1.0"/>
+            </RadialGradientBrush>
+        </Grid.Background>
+
+        <Path Data="M12,2A9,9 0 0,0 3,11C3,14.03 4.53,16.82 7,18.47V22H9V19H11V22H13V19H15V22H17V18.46C19.47,16.81 21,14 21,11A9,9 0 0,0 12,2M8,11A2,2 0 0,1 10,13A2,2 0 0,1 8,15A2,2 0 0,1 6,13A2,2 0 0,1 8,11M16,11A2,2 0 0,1 18,13A2,2 0 0,1 16,15A2,2 0 0,1 14,13A2,2 0 0,1 16,11M12,14H14V17H10V14H12Z" Fill="#33FF0000" Stretch="Uniform" Width="450" Height="450" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.08" IsHitTestVisible="False">
+            <Path.Effect>
+                <DropShadowEffect Color="#FF0000" BlurRadius="50" ShadowDepth="0" Opacity="0.5"/>
+            </Path.Effect>
+        </Path>
+
+        <Canvas x:Name="ParticleCanvas" IsHitTestVisible="False" ClipToBounds="True"/>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="250"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel -->
+            <Border Grid.Column="0" BorderBrush="{StaticResource Brush.Action.Primary}" BorderThickness="0,0,1,0" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="EVIDENCE SELECTION" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Brush.Text.Muted}" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Files}" SelectedItem="{Binding SelectedFile}" DisplayMemberPath="Name" Margin="0,0,0,20"/>
+
+                    <TextBlock Text="PATTERN DISCOVERY" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Brush.Text.Muted}" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" Padding="5"/>
+
+                    <CheckBox Content="Hex Search" IsChecked="{Binding IsHex}" Foreground="{StaticResource Brush.Text.Muted}" Margin="0,0,0,5"/>
+
+                    <!-- Search Status -->
+                    <TextBlock Text="{Binding SearchStatus}" Foreground="{StaticResource Brush.Text.Primary}" FontSize="10" Margin="0,5,0,5" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SearchStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SearchStatus}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,5,0,0">
+                        <Button Command="{Binding SearchCommand}" Content="🔍  SEARCH" Padding="15,8" FontWeight="Bold" FontSize="12">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSearching}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                            <Setter Property="Content" Value="🔍  SEARCHING..."/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Command="{Binding ExportResultsCommand}" Content="📊  EXPORT CSV" Padding="15,8" Margin="10,0,0,0" FontWeight="Bold" FontSize="12">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SearchResults.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+
+                    <TextBlock Text="ADVANCED TOOLS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Brush.Text.Muted}" Margin="0,15,0,5"/>
+                    <Button Command="{Binding IsolateAnomalyCommand}" Content="🎯  ISOLATE ANOMALY" Margin="0,0,0,5" Padding="15,8" FontWeight="Bold" FontSize="12" ToolTip="Find Longest Repeated Substring automatically"/>
+                    <Button Command="{Binding CalculateEntropyCommand}" Content="📈  ENTROPY ANALYSIS" Margin="0,0,0,5" Padding="15,8" FontWeight="Bold" FontSize="12" ToolTip="Open detailed entropy analysis window"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Center: Data Viewer -->
+            <Border Grid.Column="1" Background="{StaticResource Brush.Panel.Background}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- File Position Info -->
+                    <Border Grid.Row="0" Background="#111" BorderBrush="{StaticResource Brush.Panel.Border}" BorderThickness="0,0,0,1" Padding="10,5">
+                        <StackPanel>
+                            <TextBlock Text="{Binding FilePositionInfo}" Foreground="{StaticResource Brush.Text.Primary}" FontFamily="Consolas" FontSize="11"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                <TextBlock Text="Page Size: " Foreground="{StaticResource Brush.Text.Muted}" FontSize="10" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <ComboBox SelectedValue="{Binding PageSize}" SelectedValuePath="Tag" Width="100" FontSize="10">
+                                    <ComboBoxItem Content="4 KB" Tag="4096"/>
+                                    <ComboBoxItem Content="16 KB" Tag="16384" IsSelected="True"/>
+                                    <ComboBoxItem Content="64 KB" Tag="65536"/>
+                                    <ComboBoxItem Content="256 KB" Tag="262144"/>
+                                    <ComboBoxItem Content="1 MB" Tag="1048576"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+                        <TabControl.Resources>
+                            <Style TargetType="TabItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TabItem">
+                                            <Border Name="Border" Background="Transparent" Padding="15,10" BorderBrush="Transparent" BorderThickness="0,0,0,3" Margin="0,0,2,0" CornerRadius="0">
+                                                <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="0"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource Brush.Action.Primary}" />
+                                                    <Setter TargetName="Border" Property="Background">
+                                                        <Setter.Value>
+                                                            <SolidColorBrush Color="{StaticResource Color.Brand.Primary}" Opacity="0.1"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="False">
+                                                    <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}" />
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Border" Property="Background">
+                                                        <Setter.Value>
+                                                            <SolidColorBrush Color="{StaticResource Color.Brand.Primary}" Opacity="0.05"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TabControl.Resources>
+
+                        <!-- Hex View -->
+                        <TabItem Header="BINARY (HEX)">
+                            <Grid Background="Black">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="BINARY DATA STREAM" Foreground="{StaticResource Brush.Text.Primary}" FontWeight="Bold" FontSize="12" Margin="10,10,10,10"/>
+
+                                <!-- Virtualized Hex Viewer -->
+                                <ListBox Grid.Row="1" ItemsSource="{Binding HexData}" Background="Black" BorderThickness="0" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="10,0,10,10">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0,1"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Focusable" Value="False"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <ContentPresenter />
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="90"/>
+                                                    <ColumnDefinition Width="400"/>
+                                                    <ColumnDefinition Width="20"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Offset -->
+                                                <TextBlock Text="{Binding Offset, StringFormat={}{0:X8}}" Foreground="{StaticResource Brush.Action.Primary}" FontFamily="{StaticResource MonoFont}" FontSize="11" Margin="0,0,10,0" VerticalAlignment="Center" Opacity="0.8"/>
+
+                                                <!-- Hex Bytes -->
+                                                <ItemsControl Grid.Column="1" ItemsSource="{Binding Items}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding Value, StringFormat={}{0:X2}}" FontFamily="{StaticResource MonoFont}" FontSize="11" Margin="0,0,8,0">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}"/>
+                                                                        <Setter Property="Background" Value="Transparent"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                                                <Setter Property="Background" Value="{StaticResource Brush.Action.Primary}"/>
+                                                                                <Setter Property="Foreground" Value="Black"/>
+                                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+
+                                                <!-- Separator -->
+                                                <TextBlock Grid.Column="2" Text="|" Foreground="{StaticResource Brush.Panel.Border}" FontFamily="{StaticResource MonoFont}" FontSize="11" VerticalAlignment="Center" Margin="5,0"/>
+
+                                                <!-- ASCII Text -->
+                                                <TextBlock Grid.Column="3" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource Brush.Text.Muted}" VerticalAlignment="Center">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0}">
+                                                            <Binding Path="AsciiText"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Raw Text View -->
+                        <TabItem Header="RAW TEXT">
+                            <Grid Background="{StaticResource Brush.Panel.Background}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="RAW FILE CONTENT (UTF-8)" Foreground="{StaticResource Brush.Text.Primary}" FontWeight="Bold" FontSize="12" Margin="10,10,10,10"/>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10,0,10,10">
+                                    <RichTextBox x:Name="RawTextRichTextBox" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource Brush.Text.Primary}" Background="Transparent" BorderThickness="0" IsReadOnly="True" IsDocumentEnabled="True">
+                                        <RichTextBox.Resources>
+                                            <Style TargetType="{x:Type Paragraph}">
+                                                <Setter Property="Margin" Value="0"/>
+                                                <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                                                <Setter Property="FontSize" Value="11"/>
+                                            </Style>
+                                            <Style TargetType="{x:Type Run}">
+                                                <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                                                <Setter Property="FontSize" Value="11"/>
+                                            </Style>
+                                        </RichTextBox.Resources>
+                                    </RichTextBox>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Structure View -->
+                        <TabItem Header="STRUCTURE" Visibility="{Binding HasStructure, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid Background="{StaticResource Brush.Panel.Background}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="FILE STRUCTURE ANALYSIS" Foreground="{StaticResource Brush.Text.Primary}" FontWeight="Bold" FontSize="12" Margin="10,10,10,10"/>
+                                <TreeView Grid.Row="1" ItemsSource="{Binding StructureRoot}" Background="Transparent" BorderThickness="0" Margin="10,0,10,10">
+                                    <TreeView.ItemTemplate>
+                                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}" Foreground="#4EC9B0" FontWeight="Bold"/>
+                                                <TextBlock Text=": " Foreground="Gray"/>
+                                                <TextBlock Text="{Binding Value}" Foreground="#DCDCAA"/>
+                                                <TextBlock Text="  (Offset: 0x" Foreground="Gray" Margin="10,0,0,0"/>
+                                                <TextBlock Text="{Binding Offset, StringFormat=X}" Foreground="Gray"/>
+                                                <TextBlock Text=")" Foreground="Gray"/>
+                                            </StackPanel>
+                                        </HierarchicalDataTemplate>
+                                    </TreeView.ItemTemplate>
+                                    <TreeView.ItemContainerStyle>
+                                        <Style TargetType="TreeViewItem">
+                                            <Setter Property="IsExpanded" Value="True"/>
+                                            <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+                                        </Style>
+                                    </TreeView.ItemContainerStyle>
+                                </TreeView>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+
+                    <!-- Navigation Controls -->
+                    <Border Grid.Row="2" Background="#111" BorderBrush="{StaticResource Brush.Panel.Border}" BorderThickness="0,1,0,0" Padding="10">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Command="{Binding NavigateToStartCommand}" Content="⏮ Start" Padding="10,5" Margin="0,0,5,0" FontSize="11"/>
+                            <Button Command="{Binding NavigatePreviousCommand}" Content="◀ Previous" Padding="10,5" Margin="0,0,5,0" FontSize="11" IsEnabled="{Binding CanNavigatePrevious}"/>
+                            <Button Command="{Binding NavigateNextCommand}" Content="Next ▶" Padding="10,5" Margin="0,0,5,0" FontSize="11" IsEnabled="{Binding CanNavigateNext}"/>
+                            <Button Command="{Binding NavigateToEndCommand}" Content="End ⏭" Padding="10,5" FontSize="11"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Right Panel -->
+            <Border Grid.Column="2" Background="{StaticResource Brush.Panel.Background}" BorderBrush="{StaticResource Brush.Action.Primary}" BorderThickness="1,0,0,0" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="DISCOVERY ANALYTICS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Brush.Text.Muted}" Margin="0,0,0,10"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <TextBlock Text="Matches Found: " Foreground="{StaticResource Brush.Text.Primary}"/>
+                        <TextBlock Text="{Binding SearchCount, StringFormat={}{0:N0}}" Foreground="{StaticResource Brush.Status.Success}" FontWeight="Bold"/>
+                    </StackPanel>
+                    <ListBox ItemsSource="{Binding SearchResults}" Height="200" Background="Transparent" BorderBrush="{StaticResource Brush.Panel.Border}" MouseDoubleClick="SearchResults_MouseDoubleClick">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding StringFormat={}0x{0:X8}}" FontFamily="Consolas" Foreground="{StaticResource Brush.Status.Success}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+
+        </Grid>
+    </Grid>
+</UserControl>

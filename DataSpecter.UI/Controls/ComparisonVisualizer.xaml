@@ -1,0 +1,9 @@
+<UserControl x:Class="DataSpecter.UI.Controls.ComparisonVisualizer"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" mc:Ignorable="d" d:DesignHeight="120" d:DesignWidth="800">
+    <Border x:Name="RootBorder" Background="#0a0a0a" BorderBrush="{StaticResource Brush.Action.Primary}" BorderThickness="1" CornerRadius="4" Padding="15,15,15,15">
+        <Canvas x:Name="VisualizationCanvas" Height="120"/>
+    </Border>
+</UserControl>

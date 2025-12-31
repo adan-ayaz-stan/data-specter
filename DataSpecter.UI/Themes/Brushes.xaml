@@ -1,0 +1,29 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="Brush.App.Background" Color="{StaticResource Color.Base.900}"/>
+    <SolidColorBrush x:Key="Brush.Panel.Background" Color="{StaticResource Color.Base.800}"/>
+    <SolidColorBrush x:Key="Brush.Panel.Border" Color="{StaticResource Color.Base.700}"/>
+
+    <SolidColorBrush x:Key="Brush.Text.Primary" Color="{StaticResource Color.Text.Primary}"/>
+    <SolidColorBrush x:Key="Brush.Text.Muted" Color="{StaticResource Color.Text.Muted}"/>
+    <SolidColorBrush x:Key="Brush.Text.Inverted" Color="{StaticResource Color.Text.Inverted}"/>
+
+    <SolidColorBrush x:Key="Brush.Action.Primary" Color="{StaticResource Color.Brand.Primary}"/>
+    <SolidColorBrush x:Key="Brush.Action.Destructive" Color="{StaticResource Color.Status.Error}"/>
+
+    <SolidColorBrush x:Key="Brush.Input.Background" Color="{StaticResource Color.Base.900}"/>
+    <SolidColorBrush x:Key="Brush.Input.Border" Color="{StaticResource Color.Base.700}"/>
+
+    <SolidColorBrush x:Key="Brush.Hex.Offset" Color="{StaticResource Color.Brand.Primary}" Opacity="0.8"/>
+
+    <SolidColorBrush x:Key="Brush.Hex.Byte" Color="{StaticResource Color.Text.Primary}"/>
+
+    <SolidColorBrush x:Key="Brush.Hex.Highlight" Color="{StaticResource Color.Brand.Primary}" Opacity="0.25"/>
+    <SolidColorBrush x:Key="Brush.Hex.Selection" Color="{StaticResource Color.Brand.Primary}" Opacity="0.4"/>
+
+    <SolidColorBrush x:Key="Brush.Scroll.Thumb" Color="{StaticResource Color.Base.600}"/>
+
+    <SolidColorBrush x:Key="Brush.Status.Success" Color="{StaticResource Color.Status.Success}"/>
+
+</ResourceDictionary>
