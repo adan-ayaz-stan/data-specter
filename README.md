@@ -10,29 +10,28 @@ A high-performance binary forensic analysis tool for cybersecurity professionals
 
 ### Binary Analysis Engine
 
-- **Suffix Array Indexing**: O(M log N) pattern search using optimized suffix array construction with LCP arrays
-- **Memory-Mapped I/O**: Efficient handling of multi-gigabyte files without loading entire content into RAM
-- **Parallel Processing**: Multi-threaded index generation with real-time progress tracking
-- **Persistent Caching**: Index serialization and versioned storage for instant reuse
+- **Suffix Array Indexing**: O(M log N) pattern search using parallel radix sort construction with LCP arrays (100MB file limit for in-memory indexing)
+- **Memory-Mapped I/O**: Efficient handling of files without loading entire content into RAM using `MemoryMappedFile` and view accessors
+- **Parallel Processing**: Multi-threaded doubling algorithm for suffix array generation with real-time progress tracking
+- **Persistent Caching**: In-memory LRU cache for recently generated suffix arrays (5-entry limit)
 
 ### Pattern Detection
 
-- **Unified Search Interface**: Supports both ASCII text and hexadecimal byte pattern searches
-- **Automatic Signature Discovery**: LCP-based detection of longest repeated substrings within files
-- **Cross-File Analysis**: Identify longest common substrings between files for similarity assessment
-- **Fallback Mechanisms**: Graceful degradation to naive search for non-indexed files
+- **Unified Search Interface**: Supports both ASCII text and hexadecimal byte pattern searches via binary search on suffix arrays
+- **Cross-File Analysis**: Identify longest common substrings between files using naive sliding window comparison (4KB search window, 1MB file limit for performance)
+- **Fallback Mechanisms**: Graceful degradation to sequential search when files aren't indexed
 
 ### Visualization & Forensics
 
-- **Virtualized Hex Viewer**: Smooth rendering of large binaries with configurable chunk loading (16KB default)
-- **Entropy Analysis**: Shannon entropy visualization to identify encrypted, compressed, or obfuscated regions
-- **Structure Parsing**: Automatic format detection and parsing for PE executables and PDF documents
-- **Dual-Pane Comparison**: Side-by-side hex display with synchronized highlighting of matched regions
+- **Virtualized Hex Viewer**: WPF virtualized ListBox rendering with configurable chunk loading (16KB default page size)
+- **Entropy Analysis**: Shannon entropy calculation over configurable sliding windows (1024-byte default) for identifying randomness patterns
+- **Structure Parsing**: Automatic format detection and parsing for PE executables (DOS/NT headers, sections) and PDF documents (header, objects, trailer)
+- **Dual-Pane Comparison**: Side-by-side hex display with offset-based highlighting for matched regions
 
 ### Fuzzy Hashing
 
-- **ssdeep Integration**: Context-triggered piecewise hashing for similarity detection
-- **Comparison Scoring**: Numerical similarity metrics for forensic correlation analysis
+- **Custom SSDEEP Implementation**: Context-triggered piecewise hashing using rolling hash and block-based signatures
+- **Comparison Scoring**: Edit distance-based similarity scoring (0-100 scale) for hash comparison
 
 ## Architecture
 
@@ -51,16 +50,18 @@ DataSpecter/
 └── DataSpecter.Tests/          # Unit and performance tests
 ```
 
-**Design Patterns**: MVVM architecture with dependency injection, repository pattern for data access, strategy pattern for algorithm selection.
+**Design Patterns**: MVVM architecture with Microsoft DI container, service layer abstraction via interfaces, observable collections for real-time UI updates.
 
 ## Technical Stack
 
 - **.NET 8.0** - Cross-platform runtime with modern C# features
-- **WPF** - Rich desktop UI framework with XAML databinding
-- **ssdeep** - Fuzzy hashing library for context-triggered piecewise hashing
+- **WPF** - Rich desktop UI framework with XAML databinding and virtualization
+- **ILGPU** - GPU compute library (v1.5.1) with CUDA/CPU accelerator support for future optimization
 - **NuGet Packages**:
-  - `CommunityToolkit.Mvvm` - Modern MVVM helpers (RelayCommand, ObservableProperty)
-  - `Ookii.Dialogs.Wpf` - Native Windows file/folder dialogs
+  - `CommunityToolkit.Mvvm` (v8.4.0) - Modern MVVM helpers (RelayCommand, ObservableProperty)
+  - `Microsoft.Extensions.DependencyInjection` (v10.0.1) - Service container for DI
+  - `WPF-UI` (v4.1.0) - Modern UI controls and styling
+  - `dnYara` (v2.1.0) - YARA pattern matching library (integrated but not actively used)
 
 ## Getting Started
 
@@ -101,19 +102,23 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ### Suffix Array Construction
 
-Implements optimized SA-IS (Suffix Array Induced Sorting) algorithm with parallel processing for O(n) construction time. LCP array computed using Kasai's algorithm in linear time.
+Implements parallel doubling algorithm with radix sort optimization. Constructs suffix array in O(n log² n) time with multi-threaded sorting of (first, second) tuple pairs. LCP array computed using Kasai's algorithm in linear time with rank array preprocessing. Optimized for files up to 100MB; larger files require chunked processing.
 
 ### Pattern Search
 
-Binary search on suffix array provides O(M log N) search complexity where M is pattern length and N is file size. Significantly outperforms naive O(MN) search for indexed files.
+Binary search on suffix array provides O(M log N) search complexity where M is pattern length and N is file size. Performs two binary searches (lower bound and upper bound) to find all occurrences. Uses memory-mapped file reads during comparison to avoid loading full file.
 
 ### Longest Common Substring
 
-Uses merged suffix arrays with LCP-based sliding window to find maximal shared sequences between files in O(n+m) time complexity.
+Simple naive sliding window comparison: iterates through first 4KB of each file (limited to 1MB total per file) using nested loop pattern matching. O(n×m) complexity—suitable for prototype but requires optimization for production (recommend suffix tree or enhanced suffix array merging).
 
 ### Entropy Calculation
 
-Shannon entropy computed over configurable sliding windows (default 1024 bytes) to identify data randomness. Values approaching 8.0 indicate high entropy (encryption/compression).
+Shannon entropy computed per chunk using byte frequency distribution: `H = -Σ(p_i × log₂(p_i))` where p_i is probability of byte value i. Processes file sequentially in 1024-byte chunks, returns entropy array for visualization.
+
+### Fuzzy Hashing (SSDEEP-like)
+
+Custom implementation using rolling hash (FNV-based) with context-triggered piecewise hashing. Generates two signatures at different block sizes. Comparison uses edit distance algorithm to compute similarity score (0-100).
 
 ## Use Cases
 
@@ -125,10 +130,12 @@ Shannon entropy computed over configurable sliding windows (default 1024 bytes) 
 
 ## Performance
 
-- Indexes 100MB files in ~2-5 seconds (varies by hardware)
-- Searches indexed files in <100ms for typical patterns
-- Supports files up to 4GB with virtualized rendering
-- Entropy analysis: ~50-100 MB/s throughput
+- Indexes files up to 100MB (hard limit for in-memory indexing)
+- Indexing speed: ~20-30 MB/s for suffix array + LCP construction (single-threaded equivalent)
+- Searches indexed files in <100ms for typical patterns via O(M log N) binary search
+- Hex viewer: Virtualized rendering with 16KB page size enables smooth navigation of large files
+- Entropy analysis: Sequential chunk processing, configurable 1024-byte windows
+- LCS comparison: Limited to 4KB search space within 1MB file segments (naive algorithm)
 
 ## Contributing
 
@@ -141,12 +148,16 @@ Contributions are welcome! Please follow these guidelines:
 5. Ensure all tests pass (`dotnet test`)
 6. Submit a pull request with clear description
 
-## Roadmap
+## RoaActivate GPU-accelerated suffix array construction via ILGPU (infrastructure in place with `GpuSuffixArrayService`)
 
-- [ ] GPU-accelerated suffix array construction via CUDA/OpenCL
-- [ ] Support for ELF and Mach-O binary formats
-- [ ] Machine learning-based anomaly detection
+- [ ] Remove 100MB indexing limit: implement disk-based suffix array construction (SA-IS or DC3)
+- [ ] Optimize LCS algorithm: replace naive O(n×m) with generalized suffix tree or enhanced suffix array merging
+- [ ] Support for ELF and Mach-O binary formats (expand parser infrastructure)
+- [ ] Index persistence: serialize suffix arrays to disk for cross-session reuse
+- [ ] Longest repeated substring detection: add LCP-based anomaly finder to UI
+- [ ] YARA rule integration: activate dnYara package for signature matching workflows
 - [ ] Export functionality for analysis reports (JSON, CSV, HTML)
+- [ ] Multi-file batch processing pipeline with progress track (JSON, CSV, HTML)
 - [ ] Multi-file batch processing pipeline
 - [ ] YARA rule integration for signature matching
 
