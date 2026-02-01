@@ -165,10 +165,6 @@ Contributions are welcome! Please follow these guidelines:
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## Author
-
-**Adan Ayaz** - Binary analysis and forensic tooling specialist
-
 ---
 
 _Built for the cybersecurity community. For questions or collaboration, open an issue or submit a PR._
